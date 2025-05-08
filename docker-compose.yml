@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  web:
+    build: . 
+    container_name: fastapi
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_DB=test
+      - POSTGRES_PASSWORD=test
+    ports:
+    - "5500:5500"
+    depends_on:
+      - redis
+      - postges
+  proxy:
+    image: nginx:stable-alpine-slim
+    container_name: nginx_proxy
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+
+    depends_on:
+      - redis
+      - web
+      - postges
+
+  redis:
+    image: redis:6.2-alpine
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+     - "6379:6379"
+    volumes:
+      - redis_volume:/data
+    depends_on:
+      - postges
+  postges:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=test
+      - POSTGRES_PASSWORD=test
+    ports:
+     - "5432:5432"
+    volumes:
+      - postges_volume:/usr/local/pgsql/data
+  
+
+volumes:
+  redis_volume:
+  postges_volume:
+  
